@@ -1,0 +1,8 @@
+{
+  "name": "mcp-jobsearch",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}
