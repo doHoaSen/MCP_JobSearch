@@ -31,8 +31,8 @@ export function registerTools(server: McpServer) {
         raw_text: z.string().optional(),
       },
     },
-    async ({ url, raw_text })
-    => asToolResult(await capturePosting({ url, raw_text }))
+    async ({ url, raw_text }) =>
+      asToolResult(await capturePosting({ url, raw_text }))
   );
 
   server.registerTool(
