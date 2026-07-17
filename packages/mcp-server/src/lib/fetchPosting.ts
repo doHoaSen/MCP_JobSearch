@@ -31,10 +31,76 @@ async function fetchSaraminPosting(recIdx: string): Promise<string> {
   return htmlToText(await res.text());
 }
 
+interface WantedSkillTag {
+  text: string;
+}
+
+interface WantedJobDetailsResponse {
+  data?: {
+    job?: {
+      due_time?: string;
+      company?: { name?: string };
+      skill_tags?: WantedSkillTag[];
+      detail?: {
+        position?: string;
+        intro?: string;
+        main_tasks?: string;
+        requirements?: string;
+        preferred_points?: string;
+      };
+    };
+  };
+}
+
+/**
+ * wanted.co.kr의 상세 페이지는 대부분 정적이지만 기술스택 태그 위젯은
+ * 클라이언트에서 그려져서 일반 fetch에 안 잡힌다. 실제 데이터는
+ * chaos jobs API가 로그인 없이 JSON으로 돌려주므로 그걸 대신 호출한다.
+ */
+async function fetchWantedPosting(jobId: string): Promise<string> {
+  const res = await fetch(
+    `https://www.wanted.co.kr/api/chaos/jobs/v4/${jobId}/details`,
+    {
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        "User-Agent": DEFAULT_USER_AGENT,
+      },
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch wanted posting ${jobId}: ${res.status} ${res.statusText}`
+    );
+  }
+
+  const json = (await res.json()) as WantedJobDetailsResponse;
+  const job = json.data?.job;
+  const detail = job?.detail;
+  const skillTags = (job?.skill_tags ?? []).map((tag) => tag.text);
+
+  const parts = [
+    detail?.position && `직무: ${detail.position}`,
+    job?.company?.name && `회사: ${job.company.name}`,
+    job?.due_time && `마감일: ${job.due_time}`,
+    detail?.intro && `소개: ${detail.intro}`,
+    detail?.main_tasks && `주요업무: ${detail.main_tasks}`,
+    detail?.requirements && `자격요건: ${detail.requirements}`,
+    detail?.preferred_points && `우대사항: ${detail.preferred_points}`,
+    skillTags.length > 0 && `기술 스택 • 툴: ${skillTags.join(", ")}`,
+  ].filter(Boolean);
+
+  return parts.join("\n\n");
+}
+
 export async function fetchPostingText(url: string): Promise<string> {
   const saraminMatch = url.match(/saramin\.co\.kr\/.*[?&]rec_idx=(\d+)/);
   if (saraminMatch) {
     return fetchSaraminPosting(saraminMatch[1]);
+  }
+
+  const wantedMatch = url.match(/wanted\.co\.kr\/wd\/(\d+)/);
+  if (wantedMatch) {
+    return fetchWantedPosting(wantedMatch[1]);
   }
 
   const res = await fetch(url, { headers: { "User-Agent": DEFAULT_USER_AGENT } });
