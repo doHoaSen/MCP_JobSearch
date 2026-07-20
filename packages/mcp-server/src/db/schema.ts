@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   updated_at TEXT NOT NULL
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_source_url ON jobs(source_url);
+
 CREATE TABLE IF NOT EXISTS cover_letter_drafts (
   id TEXT PRIMARY KEY,
   job_id TEXT NOT NULL REFERENCES jobs(id),
