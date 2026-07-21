@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { SCHEMA_SQL } from "./schema.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dbPath = join(__dirname, "..", "..", "data", "jobs.sqlite");
+const dbPath =
+  process.env.JOBSEARCH_DB_PATH ?? join(__dirname, "..", "..", "data", "jobs.sqlite");
 
 mkdirSync(dirname(dbPath), { recursive: true });
 
